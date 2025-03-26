@@ -1,25 +1,30 @@
-import { FC, useMemo } from 'react';
-import { Preloader } from '../ui/preloader';
-import { OrderInfoUI } from '../ui/order-info';
-import { TIngredient } from '@utils-types';
+import { FC, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Preloader, OrderInfoUI } from '@ui';
+import { TIngredient, TOrder } from '@utils-types';
+import { useSelector } from '../../services/store';
+import { getIngredients } from '../../services/slices/ingredient';
+import { getOrderByNumberApi } from '@api';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
+  const { number } = useParams();
+  const id = Number(number);
+
+  const initialOrderData: TOrder = {
     createdAt: '',
     ingredients: [],
     _id: '',
     status: '',
     name: '',
-    updatedAt: 'string',
+    updatedAt: '',
     number: 0
   };
 
-  const ingredients: TIngredient[] = [];
+  const [orderData, setOrderData] = useState<TOrder>(initialOrderData);
 
-  /* Готовим данные для отображения */
+  const ingredientsList: TIngredient[] = useSelector(getIngredients);
   const orderInfo = useMemo(() => {
-    if (!orderData || !ingredients.length) return null;
+    if (!orderData || !ingredientsList.length) return null;
 
     const date = new Date(orderData.createdAt);
 
@@ -30,7 +35,7 @@ export const OrderInfo: FC = () => {
     const ingredientsInfo = orderData.ingredients.reduce(
       (acc: TIngredientsWithCount, item) => {
         if (!acc[item]) {
-          const ingredient = ingredients.find((ing) => ing._id === item);
+          const ingredient = ingredientsList.find((ing) => ing._id === item);
           if (ingredient) {
             acc[item] = {
               ...ingredient,
@@ -57,7 +62,15 @@ export const OrderInfo: FC = () => {
       date,
       total
     };
-  }, [orderData, ingredients]);
+  }, [orderData, ingredientsList]);
+
+  useEffect(() => {
+    getOrderByNumberApi(Number(id))
+      .then((data) => {
+        setOrderData(data.orders[0]);
+      })
+      .catch((err) => console.log(err));
+  }, []);
 
   if (!orderInfo) {
     return <Preloader />;
