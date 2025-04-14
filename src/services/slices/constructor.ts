@@ -30,9 +30,13 @@ export const constructorSlice = createSlice({
       }
     },
     deleteItem: (state, action: PayloadAction<TConstructorIngredient>) => {
-      state.ingredients = state.ingredients.filter(
-        (item) => item.id !== action.payload.id
-      );
+      if (action.payload.type === 'bun') {
+        state.bun = null;
+      } else {
+        state.ingredients = state.ingredients.filter(
+          (item) => item.id !== action.payload.id
+        );
+      }
     },
     clearAll: (state) => (state = initialState),
     updateAll: (state, action: PayloadAction<TConstructorIngredient[]>) => {
